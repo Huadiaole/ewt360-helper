@@ -47,12 +47,16 @@ jobs:
           cd extension
           zip -r ../ewt360-extension.zip . -x 'tools/*' -x '*.md'
 
+      - name: 整理产物（放平到一个目录，Release 才能取到）
+        run: |
+          mkdir -p release-assets
+          cp src/ewt360-helper.user.js release-assets/ewt360-helper.user.js
+          cp ewt360-extension.zip release-assets/
+
       - uses: actions/upload-artifact@v4
         with:
           name: userscript-and-extension
-          path: |
-            src/ewt360-helper.user.js
-            ewt360-extension.zip
+          path: release-assets/*
 
   # ---------------------------------------------------------------------- 安卓 APK
   android:
@@ -121,6 +125,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            artifacts/userscript-and-extension/ewt360-helper.user.js
-            artifacts/userscript-and-extension/ewt360-extension.zip
+            artifacts/userscript-and-extension/*
             artifacts/android-apk/*.apk
