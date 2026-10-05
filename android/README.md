@@ -263,3 +263,16 @@ Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)
 - 站点若下发 `Content-Security-Policy` 且禁止内联脚本，注入会被浏览器拦下 —— 当前实现返回的是
   自己构造的响应（不含原 CSP 响应头），但页面 `<meta http-equiv="Content-Security-Policy">` 仍可能生效。
 - 高倍速（>16x）需要脚本里开「超限补帧」，且安卓端解码能力有限，8x 以上容易音画不同步。
+
+## 10. 签名说明（重要）
+
+仓库内置了一份固定签名密钥：`android/keystore/debug.keystore`
+（alias `androiddebugkey`，口令 `android`，
+SHA-256 指纹 `9EA3C79124EB783485BDF26998EDC86F8E35D2A7EEDCF83A484311E00D83E628`）。
+
+**为什么把它放仓库里**：GitHub Actions 每次跑都是全新机器，默认 debug 密钥是随机生成的。
+不固定下来就会出现「每次发布的 APK 签名都不一样 → 升级必须先卸载、登录状态全丢」。
+内置固定密钥后，本地与 CI 产物签名一致，可以正常覆盖安装。
+
+**注意**：这是 debug 级签名（口令公开，任何人都能重新签），**不能用于上架应用商店**。
+要发正式版请自己用 `keytool` 生成 release 密钥，存进 GitHub Secrets，并改成从环境变量读取。
