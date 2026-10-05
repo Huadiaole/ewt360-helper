@@ -91,6 +91,15 @@ android/
 
 前置：**JDK 17** + **Android SDK（Platform 34 + Build-Tools 34.0.0）**。
 
+> **仓库源开关**（重要）
+> 默认使用 `google()` + `mavenCentral()`，适合 GitHub Actions 与国外网络。
+> 国内直连 `maven.google.com` 会**超时**，请加开关走阿里云镜像：
+> ```bash
+> GRADLE_MIRROR=aliyun gradle assembleDebug      # 环境变量
+> gradle assembleDebug -Dmirror=aliyun           # 或系统属性
+> ```
+> 反过来，如果镜像对某个 POM 返回 5xx，Gradle 会直接失败（不会自动换源），所以 CI 上必须用官方源。
+
 若本机没装 Android SDK，先装（任选其一）：
 
 - Android Studio 自带 SDK Manager（最省事）；

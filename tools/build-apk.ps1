@@ -36,7 +36,10 @@ $env:ANDROID_SDK_ROOT = $sdk
 $env:GRADLE_USER_HOME = Join-Path $ToolRoot 'gradle-home'
 $env:PATH = "$($jdkDir.FullName)\bin;$env:PATH"
 $env:NODE_OPTIONS = ''
+# 国内直连 maven.google.com 会超时，走阿里云镜像；CI 上不设这个变量，用官方源
+$env:GRADLE_MIRROR = 'aliyun'
 Write-Host "  JAVA_HOME = $env:JAVA_HOME"
+Write-Host "  GRADLE_MIRROR = $env:GRADLE_MIRROR"
 
 Write-Host '=== 2/5 复制到短路径工程目录 ===' -ForegroundColor Cyan
 # 中文路径 + 深目录容易触发 Windows MAX_PATH 问题，编译放到 C:\ 下的短路径
