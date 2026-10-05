@@ -66,10 +66,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
-      - name: 安装 SDK 组件
-        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      # 不用第三方 setup-android：它在这套 runner 上会挂。
+      # 直接用 runner 镜像自带的 SDK；万一没有，就手动下官方 cmdline-tools。
+      - name: 准备 Android SDK
+        run: |
+          set -e
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          if ! command -v sdkmanager >/dev/null 2>&1 && [ ! -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "sdkmanager 不可用，手动安装 cmdline-tools"
+            mkdir -p "$SDK/cmdline-tools"
+            curl -sSLo /tmp/clt.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q /tmp/clt.zip -d "$SDK/cmdline-tools"
+            mv "$SDK/cmdline-tools/cmdline-tools" "$SDK/cmdline-tools/latest"
+          fi
+          export PATH="$SDK/cmdline-tools/latest/bin:$SDK/platform-tools:$PATH"
+          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          sdkmanager --version
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -77,7 +94,7 @@ jobs:
 
       - name: 编译 debug APK
         working-directory: android
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug --no-daemon --stacktrace --console=plain
 
       - name: 重命名产物
         run: |
