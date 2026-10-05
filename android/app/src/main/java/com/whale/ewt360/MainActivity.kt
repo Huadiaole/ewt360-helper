@@ -1,11 +1,13 @@
 package com.whale.ewt360
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
@@ -18,6 +20,7 @@ import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
@@ -257,6 +260,82 @@ class MainActivity : AppCompatActivity() {
             super.onPageFinished(view, url)
             injectFallbackScript(view, url)
         }
+
+        /**
+         * 拦掉非 http(s) 协议。
+         *
+         * 站点会用 intent:// 去唤起它的原生 App（里面还嵌着 mistong:// 的 deep link），
+         * 裸 WebView 不认这些 scheme，一旦导航过去整页就变成
+         * net::ERR_UNKNOWN_URL_SCHEME 错误页 —— 这是「网页无法打开」的根因。
+         */
+        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            return handleUrlScheme(request.url?.toString(), request.isForMainFrame)
+        }
+
+        @Suppress("DEPRECATION")
+        override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
+            return handleUrlScheme(url, true)
+        }
+
+        /** 兜底：万一主框架真的加载了非 http 协议并报错，直接拉回首页，别把用户扔在错误页 */
+        override fun onReceivedError(
+            view: WebView,
+            request: WebResourceRequest,
+            error: WebResourceError
+        ) {
+            super.onReceivedError(view, request, error)
+            val failing = request.url?.toString() ?: return
+            if (request.isForMainFrame && !failing.startsWith("http")) {
+                Log.w(TAG, "主框架加载了非 http 协议($failing)，回退到首页")
+                view.loadUrl(HOME_URL)
+            }
+        }
+    }
+
+    /**
+     * @return true 表示「已经处理掉，WebView 不要再加载这个 URL」
+     */
+    private fun handleUrlScheme(url: String?, mainFrame: Boolean): Boolean {
+        if (url.isNullOrEmpty()) return false
+        val scheme = try { Uri.parse(url).scheme?.lowercase() } catch (t: Throwable) { null }
+            ?: return false
+
+        if (scheme == "http" || scheme == "https") {
+            // 站内链接留在 WebView 里（注入的脚本才能生效）；站外链接交给系统浏览器
+            if (mainFrame || UserscriptInjector.isEwtUrl(url)) return false
+            return openExternally(url)
+        }
+
+        if (scheme == "intent") {
+            // 形如 intent://host/path?x=y#Intent;scheme=xx;S.browser_fallback_url=<url>;end
+            val fallback = try {
+                Uri.parse(url).getQueryParameter("S.browser_fallback_url")
+            } catch (t: Throwable) { null }
+            if (!fallback.isNullOrEmpty() && fallback.startsWith("http")) {
+                Log.i(TAG, "intent:// 带 fallback，改走网页: $fallback")
+                webView.loadUrl(fallback)
+            } else {
+                Log.i(TAG, "已拦掉 intent:// （不去唤起原生 App）")
+            }
+            return true
+        }
+
+        // 只有真正该交给系统的协议才外抛；mistong:/weixin:/alipays: 这类一律静默拦掉，
+        // 免得用户正看着网课，突然被拉去装 App。
+        if (scheme in setOf("tel", "mailto", "sms", "geo", "market")) {
+            openExternally(url)
+        } else {
+            Log.i(TAG, "已拦掉无法处理的协议: $scheme")
+        }
+        return true
+    }
+
+    private fun openExternally(url: String): Boolean = try {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (t: Throwable) {
+        Log.w(TAG, "没有能处理该链接的应用: ${t.message}")
+        false
     }
 
     private fun injectFallbackScript(view: WebView, url: String?) {
@@ -318,11 +397,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyUserAgent() {
         val desktop = prefs.getBoolean(KEY_DESKTOP_UA, false)
-        val ua = if (desktop) DESKTOP_USER_AGENT else WebSettings.getDefaultUserAgent(this)
+        val ua = if (desktop) DESKTOP_USER_AGENT else cleanWebViewUa(WebSettings.getDefaultUserAgent(this))
         currentUserAgent = ua
         webView.settings.userAgentString = ua
         Log.i(TAG, "当前 UA(桌面=$desktop): $ua")
     }
+
+    /**
+     * 去掉系统 UA 里的 `; wv`（WebView 标记）。
+     *
+     * 站点一看到 wv 就知道自己在「别的 App 的内置浏览器」里，于是立刻走唤起原生 App 的流程
+     * （intent:// + mistong://），而裸 WebView 处理不了那个协议 —— 整页就变成错误页。
+     * 去掉标记后站点会当成普通手机 Chrome，老老实实渲染网页。
+     */
+    private fun cleanWebViewUa(raw: String): String = raw
+        .replace("; wv)", ")")
+        .replace("; wv ", "; ")
+        .replace(" wv ", " ")
+        .trim()
 
     private fun onToggleUserAgentClick() {
         val desktop = !prefs.getBoolean(KEY_DESKTOP_UA, false)

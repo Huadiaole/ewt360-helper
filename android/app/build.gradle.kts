@@ -11,8 +11,8 @@ android {
         applicationId = "com.whale.ewt360"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         // assets 里的用户脚本不要被压缩工具改写
         androidResources {

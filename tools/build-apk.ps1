@@ -72,7 +72,11 @@ Write-Host '=== 5/5 收取 APK ===' -ForegroundColor Cyan
 $apk = Join-Path $work 'app\build\outputs\apk\debug\app-debug.apk'
 if (-not (Test-Path $apk)) { throw "没找到 APK：$apk" }
 New-Item -ItemType Directory -Force -Path $apkOut | Out-Null
-$dest = Join-Path $apkOut 'EWT360-Helper-1.0.0-debug.apk'
+# 版本号从 app/build.gradle.kts 现读，别写死
+$verMatch = Select-String -Path (Join-Path $proj 'app\build.gradle.kts') -Pattern 'versionName\s*=\s*"([^"]+)"' |
+    Select-Object -First 1
+$ver = if ($verMatch) { $verMatch.Matches[0].Groups[1].Value } else { 'dev' }
+$dest = Join-Path $apkOut "EWT360-Helper-$ver-debug.apk"
 Copy-Item $apk $dest -Force
 
 Write-Host ''

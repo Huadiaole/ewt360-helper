@@ -14,7 +14,14 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ws = path.resolve(here, '..');
-const apkPath = process.argv[2] || path.join(ws, 'dist', 'EWT360-Helper-1.0.0-debug.apk');
+// 不传参数就自动挑 dist/ 里最新的那个 APK
+const defaultApk = (() => {
+  const dir = path.join(ws, 'dist');
+  if (!fs.existsSync(dir)) return path.join(dir, 'EWT360-Helper-debug.apk');
+  const apks = fs.readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.apk')).sort();
+  return apks.length ? path.join(dir, apks[apks.length - 1]) : path.join(dir, 'EWT360-Helper-debug.apk');
+})();
+const apkPath = process.argv[2] || defaultApk;
 const srcJs = path.join(ws, 'src', 'ewt360-helper.user.js');
 
 if (!fs.existsSync(apkPath)) {

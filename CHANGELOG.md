@@ -2,6 +2,14 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.0.1] - 2026-10-05
+
+### 修复
+
+- **安卓端「网页无法打开 / net::ERR_UNKNOWN_URL_SCHEME」**：站点会跳 `intent://` 去唤起它的原生 App（内嵌 `mistong://` deep link），裸 WebView 不认这些协议，整页就变成错误页。现在 `shouldOverrideUrlLoading` 会拦掉所有非 http(s) 协议；带 `S.browser_fallback_url` 的 intent 会改走网页。
+- **安卓端 UA 去掉 `; wv` 标记**：站点一看到 WebView 标记就判定「在别人 App 里」，进而走唤起 App 的流程。去掉后站点当普通手机 Chrome 处理，直接渲染网页。
+- **主框架错误兜底**：万一还是加载了非 http 协议并报错，自动拉回首页，不再把用户扔在错误页。
+
 ## [1.0.0] - 2026-10-05
 
 首个公开发布版本。
