@@ -1,0 +1,51 @@
+{
+  "name": "desktop",
+  "version": "1.0.0",
+  "description": "升学E网通助手 · 桌面版（自动连播 / 自动过认真度检查 / 自动跳题 / 强制倍速）",
+  "main": "main.js",
+  "author": "大肥鱼",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron --no-sandbox .",
+    "dist:portable": "electron-builder --win portable --x64",
+    "dist:dir": "electron-builder --win dir --x64",
+    "test": "electron --no-sandbox test/smoke.js",
+    "test:exe": "node test/packaged.js"
+  },
+  "devDependencies": {
+    "electron": "31.3.1",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.whale.ewt360",
+    "productName": "升学E网通助手",
+    "copyright": "仅用于本地学习辅助",
+    "files": [
+      "main.js",
+      "preload.js",
+      "ewt360-helper.user.js",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "EWT360-Helper-${version}-portable.exe",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "portable": {
+      "unicode": true
+    },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "compression": "maximum",
+    "asar": true
+  }
+}

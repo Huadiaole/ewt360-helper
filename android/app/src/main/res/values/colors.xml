@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用图标底色（adaptive icon 背景，取自源图四条边的平均色） -->
+    <color name="ic_launcher_background">#FFF8F7F6</color>
+
+    <!-- 主色板 -->
+    <color name="whale_blue">#1565C0</color>
+    <color name="whale_blue_dark">#0D47A1</color>
+    <color name="whale_accent">#2F9E6F</color>
+
+    <!-- 界面 -->
+    <color name="toolbar_bg">#0D47A1</color>
+    <color name="toolbar_text">#FFFFFFFF</color>
+    <color name="window_bg">#FFF7FAFF</color>
+
+    <!-- 图标用色 -->
+    <color name="icon_white">#FFFFFFFF</color>
+    <color name="icon_navy">#0B2A5B</color>
+    <color name="icon_page">#FFE8F2FF</color>
+</resources>

@@ -1,0 +1,39 @@
+# 依赖与缓存
+node_modules/
+.npm-cache/
+.electron-cache/
+.electron-builder-cache/
+.pnpm-store/
+
+# 构建产物
+desktop/dist/
+dist/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+*.apk
+*.exe
+*.zip
+
+# 运行时数据
+desktop/ewt360-helper.user.js
+desktop/userdata/
+desktop/test/.shot-profile/
+desktop/test/.smoke-profile/
+desktop/test/.exe-profile/
+desktop/test/screenshot.png
+extension/.edge-profile/
+
+# 日志与临时文件
+*.log
+*.err
+*.tmp
+~$*
+
+# 系统
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

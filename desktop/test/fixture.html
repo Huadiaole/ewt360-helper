@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>EWT360 仿真测试台</title>
+<style>
+  body { font-family: Consolas, monospace; padding: 20px; background: #fafafa; }
+  video { width: 420px; background: #111; display: block; margin: 10px 0; }
+  .item { padding: 6px 10px; border: 1px solid #ddd; margin: 4px 0; cursor: pointer; }
+  .item.active { background: #2f9e6f; color: #fff; }
+  .exam-dialog { border: 2px solid #e6a23c; padding: 14px; margin-top: 14px; background: #fffdf5; }
+  .btn-DOCWn { display: inline-block; padding: 6px 14px; background: #e6a23c; color: #fff; cursor: pointer; }
+  .question-panel { border: 2px solid #409eff; padding: 14px; margin-top: 14px; background: #f5faff; }
+  .option { padding: 5px 10px; border: 1px solid #cfe6ff; margin: 4px 0; cursor: pointer; }
+  .skip-btn { margin-top: 8px; padding: 5px 14px; }
+</style>
+</head>
+<body>
+<h3>仿真页面（模拟站点结构）</h3>
+<video id="v" width="420" muted></video>
+
+<div id="chapterList">
+  <div class="listCon">
+    <div class="item active" data-i="1">第 1 节 · 集合的概念</div>
+    <div class="item" data-i="2">第 2 节 · 集合的表示</div>
+    <div class="item" data-i="3">第 3 节 · 集合的运算</div>
+  </div>
+</div>
+
+<script>
+  window.__log = { checks: 0, skips: 0, next: 0, isTrustedFail: 0, options: 0 };
+
+  var v = document.getElementById('v');
+
+  // ① 模拟站点：每 300ms 把倍速强行改回 1x（用来检验「强制倍速」是否锁得住）
+  setInterval(function () { try { v.playbackRate = 1; } catch (e) {} }, 300);
+
+  // ② 模拟站点：对合成点击做 isTrusted 校验（用来检验绕过是否生效）
+  document.addEventListener('click', function (e) {
+    if (!e.isTrusted) window.__log.isTrustedFail++;
+  }, true);
+
+  // ③ 1.2s 后弹出「认真度检查」
+  setTimeout(function () {
+    var b = document.createElement('div');
+    b.className = 'exam-dialog';
+    b.innerHTML = '<div>认真度检查：请点击下方按钮</div><span class="btn-DOCWn">点击通过检查</span>';
+    document.body.appendChild(b);
+    b.querySelector('.btn-DOCWn').addEventListener('click', function () { window.__log.checks++; });
+  }, 1200);
+
+  // ④ 2.4s 后弹出课中选择题（带「跳过」）
+  setTimeout(function () {
+    var q = document.createElement('div');
+    q.className = 'question-panel';
+    q.innerHTML = '<div>随堂练习：下列哪个是集合？</div>' +
+      '<div class="option">A. 1,2,3</div><div class="option">B. {1,2,3}</div>' +
+      '<div class="option">C. (1,2,3)</div>' +
+      '<button class="skip-btn">跳过</button>';
+    document.body.appendChild(q);
+    q.querySelector('.skip-btn').addEventListener('click', function () { window.__log.skips++; });
+    Array.prototype.forEach.call(q.querySelectorAll('.option'), function (o) {
+      o.addEventListener('click', function () { window.__log.options++; });
+    });
+  }, 2400);
+
+  // ⑤ 章节列表点击
+  Array.prototype.forEach.call(document.querySelectorAll('.item'), function (el) {
+    el.addEventListener('click', function () {
+      window.__log.next = Number(el.dataset.i);
+      Array.prototype.forEach.call(document.querySelectorAll('.item'), function (x) { x.classList.remove('active'); });
+      el.classList.add('active');
+    });
+  });
+
+  // ⑥ 3.6s 后伪造「视频即将播完」的状态，检验自动连播
+  setTimeout(function () {
+    Object.defineProperty(v, 'duration', { configurable: true, get: function () { return 600; } });
+    Object.defineProperty(v, 'currentTime', { configurable: true, get: function () { return 599; }, set: function () {} });
+    Object.defineProperty(v, 'paused', { configurable: true, get: function () { return false; } });
+    v.play = function () { return Promise.resolve(); };
+    window.__log.faked = true;
+  }, 3600);
+  // ⑦ 9 秒后把结果回报给测试服务器（打包版 EXE 的端到端验证用）
+  setTimeout(function () {
+    var v2 = document.querySelector('video');
+    try {
+      fetch('/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasApi: !!window.__EWT,
+          panel: !!document.querySelector('.ewt-root'),
+          rate: v2 ? v2.playbackRate : null,
+          cfgSpeed: window.__EWT ? window.__EWT.CFG.speed : null,
+          cfgEnabled: window.__EWT ? window.__EWT.CFG.enabled : null,
+          log: window.__log
+        })
+      });
+    } catch (e) {}
+  }, 9000);
+</script>
+</body>
+</html>

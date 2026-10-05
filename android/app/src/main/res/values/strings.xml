@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">升学E网通助手</string>
+    <string name="btn_auto">自动模式</string>
+    <string name="btn_reload">重载</string>
+    <string name="btn_ua">UC/PC UA 切换</string>
+
+    <string name="toast_auto_on">自动模式已开启：自动连播 / 跳过选择题 / 过认真度检查 / 4x 强制倍速</string>
+    <string name="toast_auto_wait">脚本尚未就绪，等页面加载完成后再点一次</string>
+    <string name="toast_ua_desktop">已切换为桌面 Chrome UA（PC 版页面）</string>
+    <string name="toast_ua_mobile">已切回默认 UA（手机版页面）</string>
+</resources>

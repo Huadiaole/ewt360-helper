@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 派生自 Theme.AppCompat.NoActionBar：工具栏由代码自己搭 -->
+    <style name="Theme.EWT360" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/whale_blue</item>
+        <item name="colorPrimaryDark">@color/whale_blue_dark</item>
+        <item name="colorAccent">@color/whale_accent</item>
+        <item name="android:windowBackground">@color/window_bg</item>
+        <item name="android:statusBarColor">@color/whale_blue_dark</item>
+        <item name="android:navigationBarColor">@color/whale_blue_dark</item>
+    </style>
+
+    <!--
+      工具栏三个按钮的样式在 MainActivity.createBarButton() 里用代码构建
+      （GradientDrawable 圆角背景），这里不再声明额外 style，保持文件数最少。
+    -->
+
+</resources>
